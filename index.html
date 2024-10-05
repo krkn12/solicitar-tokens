@@ -1,248 +1,164 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solicitar Tokens</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Carteira de Tokens</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-        .container {
-            width: 400px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
-        }
-        input, button {
-            padding: 10px;
-            margin: 10px;
-            width: 100%;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        h1, h3, p {
-            margin-bottom: 20px;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin-top: 50px;
+      }
+      .container {
+        width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+      }
+      input,
+      button {
+        padding: 10px;
+        margin: 10px;
+        width: 100%;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      h1,
+      h3,
+      p {
+        margin-bottom: 20px;
+      }
+      hr {
+        margin: 20px 0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>Carteira de Tokens</h1>
-        <p id="walletAddress">Conectar Carteira</p>
-        <button onclick="connectWallet()">Conectar</button>
-        
-        <h3>Saldo de Tokens</h3>
-        <p id="tokenBalance">0</p>
-        <hr>
-        
-        <h3>Solicitar Tokens</h3>
-        <input type="text" id="amount" placeholder="Quantidade">
-        <button onclick="requestTokens()">Solicitar Tokens</button>
-        
-        <p id="transferStatus"></p>
+      <h1>Carteira de Tokens</h1>
+      <p id="walletAddress">Conectar Carteira</p>
+      <button onclick="connectWallet()">Conectar</button>
+
+      <h3>Saldo de Tokens</h3>
+      <p id="tokenBalance">0</p>
+      <hr />
+
+      <h3>Transferir Tokens</h3>
+      <input type="text" id="amount" placeholder="Quantidade" />
+      <button onclick="transferTokens()">Transferir Tokens</button>
+
+      <p id="transferStatus"></p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <script>
-        let web3;
-        let contract;
-        let userAccount;
+      let web3;
+      let contract;
+      let userAccount;
 
-        // ABI do contrato
-        const abi = [
-            // Coloque aqui a ABI do contrato
-            [
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "value",
-				"type": "uint256"
-			}
-		],
-		"name": "transfer",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "value",
-				"type": "uint256"
-			}
-		],
-		"name": "Transfer",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "balanceOf",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "maxSupply",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "name",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "symbol",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "totalSupply",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-]
-        ];
+      // ABI do contrato (substitua pela correta)
+      const abi = [
+        {
+          constant: true,
+          inputs: [{ name: "owner", type: "address" }],
+          name: "balanceOf",
+          outputs: [{ name: "balance", type: "uint256" }],
+          type: "function",
+        },
+        {
+          constant: false,
+          inputs: [
+            { name: "to", type: "address" },
+            { name: "value", type: "uint256" },
+          ],
+          name: "transfer",
+          outputs: [{ name: "", type: "bool" }],
+          type: "function",
+        },
+      ];
 
-        // Endereço do contrato
-        const contractAddress = '0xcDbc17A6B383C9C51AA699BE82373290784768ff';
+      // Endereço do contrato
+      const contractAddress = "0xcDbc17A6B383C9C51AA699BE82373290784768ff";
 
-        // Função para conectar à carteira
-        async function connectWallet() {
-            if (window.ethereum) {
-                try {
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    web3 = new Web3(window.ethereum);
-                    userAccount = (await web3.eth.getAccounts())[0];
-                    document.getElementById('walletAddress').textContent = `Carteira conectada: ${userAccount}`;
-                    
-                    // Conectando ao contrato
-                    contract = new web3.eth.Contract(abi, contractAddress);
-                    getTokenBalance();
-                } catch (error) {
-                    console.error("Erro ao conectar à carteira", error);
-                }
-            } else {
-                alert("Instale uma carteira como MetaMask ou Trust Wallet para continuar.");
-            }
+      // Função para conectar à carteira
+      async function connectWallet() {
+        if (window.ethereum) {
+          try {
+            await window.ethereum.request({ method: "eth_requestAccounts" });
+            web3 = new Web3(window.ethereum);
+            userAccount = (await web3.eth.getAccounts())[0];
+            document.getElementById(
+              "walletAddress"
+            ).textContent = `Carteira conectada: ${userAccount}`;
+
+            // Conectando ao contrato
+            contract = new web3.eth.Contract(abi, contractAddress);
+            getTokenBalance();
+          } catch (error) {
+            console.error("Erro ao conectar à carteira", error);
+          }
+        } else {
+          alert(
+            "Instale uma carteira como MetaMask ou Trust Wallet para continuar."
+          );
         }
+      }
 
-        // Função para obter o saldo de tokens
-        async function getTokenBalance() {
-            try {
-                const balance = await contract.methods.balanceOf(userAccount).call();
-                document.getElementById('tokenBalance').textContent = `${web3.utils.fromWei(balance, 'ether')} Tokens`;
-            } catch (error) {
-                console.error("Erro ao obter saldo de tokens", error);
-            }
+      // Função para obter o saldo de tokens
+      async function getTokenBalance() {
+        try {
+          const balance = await contract.methods.balanceOf(userAccount).call();
+          document.getElementById(
+            "tokenBalance"
+          ).textContent = `${web3.utils.fromWei(balance, "ether")} Tokens`;
+        } catch (error) {
+          console.error("Erro ao obter saldo de tokens", error);
         }
+      }
 
-        // Função para solicitar tokens
-        async function requestTokens() {
-            const amount = document.getElementById('amount').value;
+      // Função para transferir tokens para a mesma carteira conectada
+      async function transferTokens() {
+        const amount = parseInt(document.getElementById("amount").value); // Pegar a quantidade como inteiro
 
-            if (amount) {
-                try {
-                    const tx = await contract.methods.requestTokens(web3.utils.toWei(amount, 'ether')).send({ from: userAccount });
-                    document.getElementById('transferStatus').textContent = `Tokens solicitados com sucesso: ${tx.transactionHash}`;
-                    getTokenBalance(); // Atualiza o saldo após a solicitação
-                } catch (error) {
-                    console.error("Erro ao solicitar tokens", error);
-                    document.getElementById('transferStatus').textContent = `Erro ao solicitar tokens: ${error.message}`;
-                }
-            } else {
-                alert("Informe a quantidade de tokens a solicitar.");
-            }
+        if (!isNaN(amount) && amount > 0) {
+          // Verifique se é um número válido e maior que zero
+          try {
+            const gasPrice = await web3.eth.getGasPrice(); // Obter o gasPrice atual
+            const amountInWei = web3.utils.toWei(amount.toString(), "ether"); // Converter a quantidade para Wei (string)
+
+            // Usar 'userAccount' como o destinatário
+            const tx = await contract.methods
+              .transfer(userAccount, amountInWei) // Passar a quantidade convertida como string
+              .send({
+                from: userAccount,
+                gasPrice: web3.utils.toHex(gasPrice * 1.2), // Aumentar o gas em 20%
+              });
+
+            document.getElementById(
+              "transferStatus"
+            ).textContent = `Tokens transferidos com sucesso: ${tx.transactionHash}`;
+            getTokenBalance(); // Atualiza o saldo após a transferência
+          } catch (error) {
+            console.error("Erro ao transferir tokens", error);
+            document.getElementById(
+              "transferStatus"
+            ).textContent = `Erro ao transferir tokens: ${error.message}`;
+          }
+        } else {
+          alert("Informe uma quantidade válida de tokens a transferir.");
         }
+      }
     </script>
-</body>
+  </body>
 </html>
